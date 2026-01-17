@@ -231,6 +231,47 @@ Lihat file `sevima_client.py` untuk daftar lengkap semua method yang tersedia.
 | `SEVIMA_SECRET_KEY` | Yes | Secret Key untuk autentikasi |
 | `SEVIMA_BASE_URL` | No | Base URL API (default: https://api.sevimaplatform.com) |
 
+## Web UI - Endpoint Viewer
+
+Aplikasi web sederhana untuk melihat dan test semua endpoint SEVIMA API secara visual.
+
+### Menjalankan Web UI
+
+1. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+2. Setup environment variables (pastikan file `.env` sudah ada dengan `SEVIMA_API_KEY` dan `SEVIMA_SECRET_KEY`)
+
+3. Jalankan aplikasi web:
+```bash
+python app.py
+```
+
+4. Buka browser dan akses: `http://localhost:5000`
+
+### Fitur Web UI
+
+- ✅ **Daftar Semua Endpoint**: Menampilkan semua endpoint dari Postman collection yang sudah di-parse
+- ✅ **Search**: Pencarian endpoint berdasarkan method atau path
+- ✅ **Kategori**: Endpoint dikelompokkan berdasarkan kategori
+- ✅ **Detail Endpoint**: Melihat detail setiap endpoint (method, path, parameters)
+- ✅ **Test Endpoint**: Test endpoint langsung dari UI dan lihat response
+- ✅ **Path Parameters**: Input path parameters yang diperlukan (misalnya `{id}`)
+- ✅ **Query Parameters**: Tambah query parameters secara dinamis
+- ✅ **Request Body**: Input JSON body untuk POST/PUT requests
+- ✅ **Response Viewer**: Melihat response dengan syntax highlighting
+
+### Screenshot
+
+Web UI menampilkan:
+- Sidebar dengan daftar semua endpoint yang dikelompokkan per kategori
+- Search box untuk mencari endpoint
+- Area konten untuk melihat detail endpoint dan test response
+- Form untuk mengisi parameter yang diperlukan
+- Response viewer dengan JSON formatting
+
 ## License
 
 MIT

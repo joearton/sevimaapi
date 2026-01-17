@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEVIMA API Platform - Response Documentation</title>
+    <!-- Prism.js for JSON syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .nav-link {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .content-area {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .stats {
+            background: #f8f9fa;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .endpoint-doc {
+            margin-bottom: 40px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .endpoint-doc:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .endpoint-header {
+            background: #f8f9fa;
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e0e0e0;
+            transition: background 0.3s;
+        }
+
+        .endpoint-header:hover {
+            background: #e9ecef;
+        }
+
+        .endpoint-header.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .endpoint-path {
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+            word-break: break-all;
+        }
+
+        .endpoint-header.active .endpoint-path {
+            color: white;
+        }
+
+        .toggle-icon {
+            font-size: 1.5em;
+            transition: transform 0.3s;
+        }
+
+        .endpoint-header.active .toggle-icon {
+            transform: rotate(90deg);
+        }
+
+        .endpoint-content {
+            display: none;
+            padding: 20px;
+        }
+
+        .endpoint-content.active {
+            display: block;
+        }
+
+        .endpoint-meta {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .meta-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .meta-value {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .json-display {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        .json-display pre {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            border: none;
+            overflow: visible;
+        }
+
+        .json-display code {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state h2 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .expand-all-btn, .collapse-all-btn {
+            padding: 8px 16px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .expand-all-btn:hover {
+            background: #218838;
+        }
+
+        .collapse-all-btn {
+            background: #dc3545;
+        }
+
+        .collapse-all-btn:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div>
+                    <h1>📚 Response Documentation</h1>
+                    <p class="subtitle">Dokumentasi struktur response dari setiap endpoint</p>
+                </div>
+                <a href="/" class="nav-link">← Kembali ke Endpoint Viewer</a>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="controls">
+                <input type="text" class="search-box" id="searchBox" placeholder="🔍 Cari endpoint...">
+                <div class="stats" id="stats">Memuat...</div>
+                <div>
+                    <button class="expand-all-btn" onclick="expandAll()">Expand All</button>
+                    <button class="collapse-all-btn" onclick="collapseAll()">Collapse All</button>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Memuat dokumentasi...</p>
+            </div>
+
+            <div id="documentationContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let documentation = {};
+        let allExpanded = false;
+
+        // Load documentation
+        async function loadDocumentation() {
+            const loading = document.getElementById('loading');
+            const content = document.getElementById('documentationContent');
+            const stats = document.getElementById('stats');
+
+            try {
+                const response = await fetch('/api/documentation');
+                const data = await response.json();
+
+                loading.style.display = 'none';
+
+                if (data.success && data.documentation && Object.keys(data.documentation).length > 0) {
+                    documentation = data.documentation;
+                    renderDocumentation();
+                    updateStats();
+                } else {
+                    content.innerHTML = `
+                        <div class="empty-state">
+                            <h2>📝 Belum Ada Dokumentasi</h2>
+                            <p>Test beberapa endpoint terlebih dahulu untuk menghasilkan dokumentasi response.</p>
+                            <p style="margin-top: 20px;">
+                                <a href="/" class="nav-link">Test Endpoint Sekarang</a>
+                            </p>
+                        </div>
+                    `;
+                    stats.textContent = '0 Endpoints';
+                }
+            } catch (err) {
+                loading.style.display = 'none';
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <h2>❌ Error</h2>
+                        <p>Gagal memuat dokumentasi: ${err.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderDocumentation() {
+            const content = document.getElementById('documentationContent');
+            const endpoints = Object.keys(documentation);
+            
+            if (endpoints.length === 0) {
+                content.innerHTML = '<div class="empty-state"><h2>Belum ada dokumentasi</h2></div>';
+                return;
+            }
+
+            let html = '';
+            endpoints.forEach((endpoint, index) => {
+                const structure = documentation[endpoint];
+                const jsonString = JSON.stringify(structure, null, 2);
+                const highlightedJson = Prism.highlight(jsonString, Prism.languages.json, 'json');
+
+                html += `
+                    <div class="endpoint-doc" data-endpoint="${endpoint}">
+                        <div class="endpoint-header" onclick="toggleEndpoint(${index})">
+                            <div>
+                                <div class="endpoint-path">${endpoint}</div>
+                            </div>
+                            <span class="toggle-icon">▶</span>
+                        </div>
+                        <div class="endpoint-content" id="content-${index}">
+                            <div class="endpoint-meta">
+                                <div class="meta-item">
+                                    <span class="meta-label">Endpoint:</span>
+                                    <span class="meta-value">${endpoint}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Response Keys:</span>
+                                    <span class="meta-value">${countKeys(structure)}</span>
+                                </div>
+                            </div>
+                            <div class="json-display">
+                                <pre><code class="language-json">${highlightedJson}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            content.innerHTML = html;
+        }
+
+        function countKeys(obj) {
+            if (typeof obj !== 'object' || obj === null) return 0;
+            let count = 0;
+            for (const key in obj) {
+                count++;
+                if (typeof obj[key] === 'object' && obj[key] !== null) {
+                    count += countKeys(obj[key]);
+                }
+            }
+            return count;
+        }
+
+        function toggleEndpoint(index) {
+            const header = document.querySelectorAll('.endpoint-header')[index];
+            const content = document.getElementById(`content-${index}`);
+            
+            if (content.classList.contains('active')) {
+                content.classList.remove('active');
+                header.classList.remove('active');
+            } else {
+                content.classList.add('active');
+                header.classList.add('active');
+            }
+        }
+
+        function expandAll() {
+            const headers = document.querySelectorAll('.endpoint-header');
+            const contents = document.querySelectorAll('.endpoint-content');
+            
+            headers.forEach(header => header.classList.add('active'));
+            contents.forEach(content => content.classList.add('active'));
+            allExpanded = true;
+        }
+
+        function collapseAll() {
+            const headers = document.querySelectorAll('.endpoint-header');
+            const contents = document.querySelectorAll('.endpoint-content');
+            
+            headers.forEach(header => header.classList.remove('active'));
+            contents.forEach(content => content.classList.remove('active'));
+            allExpanded = false;
+        }
+
+        function updateStats() {
+            const stats = document.getElementById('stats');
+            const count = Object.keys(documentation).length;
+            stats.textContent = `${count} Endpoint${count !== 1 ? 's' : ''} Tersedia`;
+        }
+
+        // Search functionality
+        document.getElementById('searchBox').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            const docs = document.querySelectorAll('.endpoint-doc');
+            
+            docs.forEach(doc => {
+                const endpoint = doc.dataset.endpoint.toLowerCase();
+                if (searchTerm === '' || endpoint.includes(searchTerm)) {
+                    doc.style.display = 'block';
+                } else {
+                    doc.style.display = 'none';
+                }
+            });
+        });
+
+        // Load documentation on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDocumentation();
+        });
+    </script>
+</body>
+</html>

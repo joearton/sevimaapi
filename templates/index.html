@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEVIMA API Platform - Endpoint Viewer</title>
+    <!-- Prism.js for JSON syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Courier New', monospace;
+            background: #1e1e1e;
+            min-height: 100vh;
+            padding: 20px;
+            color: #d4d4d4;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: #252526;
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid #3e3e42;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #4fc3f7;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(79, 195, 247, 0.3);
+        }
+
+        .subtitle {
+            color: #858585;
+            font-size: 1.1em;
+        }
+
+        .stats {
+            display: inline-block;
+            background: #0e639c;
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-weight: 600;
+            border: 1px solid #007acc;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+        }
+
+        .sidebar {
+            background: #252526;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #3e3e42;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #007acc;
+            box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+        }
+
+        .search-box::placeholder {
+            color: #6a6a6a;
+        }
+
+        .category {
+            margin-bottom: 20px;
+        }
+
+        .category-header {
+            font-weight: 700;
+            color: #4ec9b0;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .endpoint-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #1e1e1e;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            border: 1px solid #2d2d30;
+        }
+
+        .endpoint-item:hover {
+            background: #2a2d2e;
+            border-left-color: #007acc;
+            border-color: #3e3e42;
+        }
+
+        .endpoint-item.active {
+            background: #094771;
+            color: #ffffff;
+            border-left-color: #4fc3f7;
+            border-color: #007acc;
+        }
+
+        .method-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-right: 8px;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .method-get { background: #28a745; color: white; }
+        .method-post { background: #007bff; color: white; }
+        .method-put { background: #ffc107; color: #333; }
+        .method-delete { background: #dc3545; color: white; }
+
+        .endpoint-path {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            word-break: break-all;
+        }
+
+        .content-area {
+            background: #252526;
+            border-radius: 8px;
+            padding: 30px;
+            border: 1px solid #3e3e42;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .endpoint-details {
+            display: none;
+        }
+
+        .endpoint-details.active {
+            display: block;
+        }
+
+        .endpoint-title {
+            font-size: 1.8em;
+            color: #4fc3f7;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .info-section {
+            margin-bottom: 25px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #858585;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            background: #1e1e1e;
+            padding: 12px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            color: #ce9178;
+            word-break: break-all;
+            border: 1px solid #3e3e42;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #d4d4d4;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #007acc;
+            box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            min-height: 100px;
+            resize: vertical;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: #007acc;
+            box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #0e639c;
+            color: white;
+            border: 1px solid #007acc;
+        }
+
+        .btn-primary:hover {
+            background: #1177bb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 122, 204, 0.3);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .response-area {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .response-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #4fc3f7;
+        }
+
+        .copy-btn {
+            padding: 8px 16px;
+            background: #0e639c;
+            color: white;
+            border: 1px solid #007acc;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .copy-btn:hover {
+            background: #1177bb;
+            transform: translateY(-1px);
+        }
+
+        .copy-btn:active {
+            transform: translateY(0);
+        }
+
+        .copy-btn.copied {
+            background: #0e7a0e;
+            border-color: #10a310;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .response-content {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 600px;
+            overflow-y: auto;
+            position: relative;
+            border: 1px solid #3e3e42;
+        }
+
+        .response-content pre {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            border: none;
+            overflow: visible;
+        }
+
+        .response-content code {
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .error {
+            background: #3a1d1d;
+            color: #f48771;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 3px solid #f48771;
+            margin-top: 20px;
+            border: 1px solid #5a1f1f;
+        }
+
+        .success {
+            background: #1e3a1e;
+            color: #89d185;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 3px solid #89d185;
+            margin-top: 20px;
+            border: 1px solid #2e4a2e;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state h2 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .param-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-small:hover {
+            background: #c82333;
+        }
+
+        .btn-add {
+            background: #28a745;
+        }
+
+        .btn-add:hover {
+            background: #218838;
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                max-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>🚀 SEVIMA API Platform</h1>
+                    <p class="subtitle">Endpoint Viewer & Tester</p>
+                    <span class="stats">{{ total }} Endpoints Tersedia</span>
+                </div>
+                <a href="/documentation" style="display: inline-block; padding: 12px 24px; background: #28a745; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: all 0.3s;">
+                    📚 Dokumentasi Response
+                </a>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <input type="text" class="search-box" id="searchBox" placeholder="🔍 Cari endpoint...">
+                
+                {% for category, endpoints in categories.items() %}
+                <div class="category">
+                    <div class="category-header">{{ category }}</div>
+                    {% for endpoint in endpoints %}
+                    <div class="endpoint-item" 
+                         data-method="{{ endpoint.method }}"
+                         data-path="{{ endpoint.path }}"
+                         data-display-path="{{ endpoint.display_path }}"
+                         data-query-params="{{ (endpoint.query_params or []) | tojson }}"
+                         data-body="{{ endpoint.body | tojson if endpoint.body else 'null' }}"
+                         data-path-vars="{{ (endpoint.path_vars or []) | tojson }}">
+                        <span class="method-badge method-{{ endpoint.method.lower() }}">{{ endpoint.method }}</span>
+                        <span class="endpoint-path">{{ endpoint.display_path }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="content-area">
+                <div class="empty-state" id="emptyState">
+                    <h2>👈 Pilih Endpoint</h2>
+                    <p>Pilih endpoint dari sidebar untuk melihat detail dan test response</p>
+                </div>
+
+                <div class="endpoint-details" id="endpointDetails">
+                    <div class="endpoint-title" id="endpointTitle"></div>
+                    
+                    <div class="info-section">
+                        <div class="info-label">Endpoint Path</div>
+                        <div class="info-value" id="endpointPath"></div>
+                    </div>
+
+                    <form id="testForm">
+                        <div id="pathParamsSection"></div>
+                        <div id="queryParamsSection"></div>
+                        <div id="bodySection"></div>
+                        
+                        <button type="submit" class="btn btn-primary" id="testButton">
+                            ▶️ Test Endpoint
+                        </button>
+                    </form>
+
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <p>Mengirim request...</p>
+                    </div>
+
+                    <div class="response-area" id="responseArea" style="display: none;">
+                        <div class="response-header">
+                            <div class="response-title">Response</div>
+                            <button class="copy-btn" id="copyBtn" onclick="copyResponse()" title="Copy response JSON">
+                                📋 Copy
+                            </button>
+                        </div>
+                        <div id="responseContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentEndpoint = null;
+        let currentResponseData = null;
+
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Search functionality
+            const searchBox = document.getElementById('searchBox');
+            if (!searchBox) {
+                console.error('Search box element not found');
+                return;
+            }
+
+            searchBox.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase().trim();
+                const categories = document.querySelectorAll('.category');
+                
+                categories.forEach(category => {
+                    const categoryHeader = category.querySelector('.category-header');
+                    const categoryName = categoryHeader ? categoryHeader.textContent.toLowerCase() : '';
+                    const endpointItems = category.querySelectorAll('.endpoint-item');
+                    
+                    let hasVisibleItem = false;
+                    
+                    endpointItems.forEach(item => {
+                        const path = item.querySelector('.endpoint-path').textContent.toLowerCase();
+                        const method = item.dataset.method ? item.dataset.method.toLowerCase() : '';
+                        const searchText = `${method} ${path} ${categoryName}`;
+                        
+                        if (searchTerm === '' || searchText.includes(searchTerm)) {
+                            item.style.display = 'block';
+                            hasVisibleItem = true;
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                    
+                    // Hide/show category based on visible items
+                    if (searchTerm === '' || hasVisibleItem) {
+                        category.style.display = 'block';
+                    } else {
+                        category.style.display = 'none';
+                    }
+                });
+            });
+
+            // Endpoint selection
+            document.querySelectorAll('.endpoint-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    // Remove active class from all items
+                    document.querySelectorAll('.endpoint-item').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Hide empty state
+                    document.getElementById('emptyState').style.display = 'none';
+                    document.getElementById('endpointDetails').classList.add('active');
+                    
+                    // Load endpoint details
+                    // Debug: log dataset
+                    console.log('Dataset:', {
+                        method: this.dataset.method,
+                        path: this.dataset.path,
+                        displayPath: this.dataset.displayPath,
+                        pathVars: this.dataset.pathVars
+                    });
+                    
+                    // Parse pathVars dengan error handling
+                    let pathVarsData = [];
+                    try {
+                        if (this.dataset.pathVars && this.dataset.pathVars.trim() !== '' && this.dataset.pathVars.trim() !== '[]') {
+                            const parsed = JSON.parse(this.dataset.pathVars);
+                            if (Array.isArray(parsed)) {
+                                pathVarsData = parsed;
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error parsing pathVars:', err, 'Raw value:', this.dataset.pathVars);
+                        pathVarsData = [];
+                    }
+                    console.log('Parsed pathVars:', pathVarsData);
+                    
+                    // Parse queryParams dengan error handling
+                    let queryParamsData = [];
+                    try {
+                        if (this.dataset.queryParams && this.dataset.queryParams.trim() !== '' && this.dataset.queryParams.trim() !== '[]') {
+                            const parsed = JSON.parse(this.dataset.queryParams);
+                            if (Array.isArray(parsed)) {
+                                queryParamsData = parsed;
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error parsing queryParams:', err);
+                        queryParamsData = [];
+                    }
+                    
+                    // Parse body dengan error handling
+                    let bodyData = null;
+                    try {
+                        if (this.dataset.body && this.dataset.body.trim() !== '' && this.dataset.body.trim() !== 'null') {
+                            bodyData = JSON.parse(this.dataset.body);
+                        }
+                    } catch (err) {
+                        console.error('Error parsing body:', err);
+                        bodyData = null;
+                    }
+                    
+                    loadEndpointDetails({
+                        method: this.dataset.method,
+                        path: this.dataset.path,
+                        displayPath: this.dataset.displayPath || this.dataset.path,
+                        queryParams: queryParamsData,
+                        body: bodyData,
+                        pathVars: pathVarsData
+                    });
+                });
+            });
+
+            // Form submission
+            const testForm = document.getElementById('testForm');
+            if (testForm) {
+                testForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const button = document.getElementById('testButton');
+                    const loading = document.getElementById('loading');
+                    const responseArea = document.getElementById('responseArea');
+                    const responseContent = document.getElementById('responseContent');
+                    
+                    // Validasi: pastikan endpoint sudah dipilih
+                    if (!currentEndpoint) {
+                        responseContent.innerHTML = `<div class="error">❌ Error: Silakan pilih endpoint terlebih dahulu!</div>`;
+                        responseArea.style.display = 'block';
+                        button.disabled = false;
+                        return;
+                    }
+                    
+                    // Validasi: pastikan currentEndpoint memiliki method dan path
+                    if (!currentEndpoint.method || !currentEndpoint.path) {
+                        responseContent.innerHTML = `<div class="error">❌ Error: Endpoint tidak valid. Silakan pilih endpoint lagi!</div>`;
+                        responseArea.style.display = 'block';
+                        button.disabled = false;
+                        return;
+                    }
+                    
+                    button.disabled = true;
+                    loading.classList.add('active');
+                    responseArea.style.display = 'none';
+                    
+                    // Collect form data
+                    const formData = new FormData(e.target);
+                    
+                    // Path parameters
+                    const pathParams = {};
+                    if (currentEndpoint.pathVars && Array.isArray(currentEndpoint.pathVars)) {
+                        currentEndpoint.pathVars.forEach(param => {
+                            const value = formData.get(`path_${param}`);
+                            if (value) pathParams[param] = value;
+                        });
+                    }
+                    
+                    // Query parameters
+                    const queryParams = {};
+                    const queryRows = document.querySelectorAll('#queryParamsList .param-row');
+                    queryRows.forEach(row => {
+                        const key = row.querySelector('[name="query_key"]')?.value;
+                        const value = row.querySelector('[name="query_value"]')?.value;
+                        if (key && value) queryParams[key] = value;
+                    });
+                    
+                    // Body
+                    let bodyData = null;
+                    const bodyInput = document.getElementById('bodyInput');
+                    if (bodyInput && bodyInput.value.trim()) {
+                        try {
+                            bodyData = JSON.parse(bodyInput.value);
+                        } catch (err) {
+                            responseContent.innerHTML = `<div class="error">Error parsing JSON body: ${err.message}</div>`;
+                            responseArea.style.display = 'block';
+                            loading.classList.remove('active');
+                            button.disabled = false;
+                            return;
+                        }
+                    }
+                    
+                    // Make request
+                    try {
+                        const response = await fetch('/api/test', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                method: currentEndpoint.method,
+                                path: currentEndpoint.path,
+                                path_params: pathParams,
+                                query_params: queryParams,
+                                body: bodyData
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            // Store response data for copying
+                            currentResponseData = data.response;
+                            
+                            // Format JSON dengan syntax highlighting menggunakan Prism.js
+                            const jsonString = JSON.stringify(data.response, null, 2);
+                            const highlightedJson = Prism.highlight(jsonString, Prism.languages.json, 'json');
+                            
+                            responseContent.innerHTML = `
+                                <div class="success">✅ Request berhasil!</div>
+                                <div class="response-content">
+                                    <pre><code class="language-json">${highlightedJson}</code></pre>
+                                </div>
+                            `;
+                        } else {
+                            // Format error message
+                            let errorHtml = '';
+                            if (typeof data.error === 'object') {
+                                const errorJsonString = JSON.stringify(data.error, null, 2);
+                                const highlightedError = Prism.highlight(errorJsonString, Prism.languages.json, 'json');
+                                errorHtml = `<div class="response-content"><pre><code class="language-json">${highlightedError}</code></pre></div>`;
+                            }
+                            
+                            let tracebackHtml = '';
+                            if (data.traceback) {
+                                const highlightedTraceback = Prism.highlight(data.traceback, Prism.languages.python || Prism.languages.clike, 'python');
+                                tracebackHtml = `<div class="response-content"><pre><code class="language-python">${highlightedTraceback}</code></pre></div>`;
+                            }
+                            
+                            responseContent.innerHTML = `
+                                <div class="error">❌ Error: ${typeof data.error === 'object' ? 'Lihat detail di bawah' : data.error}</div>
+                                ${errorHtml}
+                                ${tracebackHtml}
+                            `;
+                        }
+                        
+                    } catch (err) {
+                        responseContent.innerHTML = `<div class="error">❌ Network Error: ${err.message}</div>`;
+                    }
+                    
+                    loading.classList.remove('active');
+                    responseArea.style.display = 'block';
+                    button.disabled = false;
+                });
+            }
+        });
+
+        // Functions defined outside DOMContentLoaded for global access
+        function loadEndpointDetails(endpoint) {
+            // Validasi endpoint object
+            if (!endpoint || !endpoint.method || !endpoint.path) {
+                console.error('Invalid endpoint:', endpoint);
+                return;
+            }
+            
+            // Set currentEndpoint dengan deep copy untuk memastikan tidak hilang
+            const endpointData = {
+                method: endpoint.method || '',
+                path: endpoint.path || '',
+                displayPath: endpoint.displayPath || endpoint.path || '',
+                queryParams: endpoint.queryParams || [],
+                body: endpoint.body || null,
+                pathVars: endpoint.pathVars || []
+            };
+            
+            // Set currentEndpoint
+            currentEndpoint = endpointData;
+            
+            // Debug: log endpoint untuk debugging
+            console.log('Loading endpoint:', currentEndpoint);
+            console.log('currentEndpoint set to:', currentEndpoint);
+            
+            // Set title
+            document.getElementById('endpointTitle').innerHTML = `
+                <span class="method-badge method-${endpointData.method.toLowerCase()}">${endpointData.method}</span>
+                <span>${endpointData.displayPath}</span>
+            `;
+            
+            // Set path
+            document.getElementById('endpointPath').textContent = endpointData.path;
+            
+            // Path parameters - extract dari pathVars atau dari path langsung
+            let pathVarsToUse = [];
+            
+            // Cek pathVars dari endpoint object
+            if (endpointData.pathVars && Array.isArray(endpointData.pathVars) && endpointData.pathVars.length > 0) {
+                pathVarsToUse = [...endpointData.pathVars]; // Copy array
+                console.log('Path vars dari endpoint:', pathVarsToUse);
+            } else {
+                // Extract dari path jika tidak ada di pathVars (deteksi {id} atau :id)
+                const path = endpointData.path || endpointData.displayPath || '';
+                console.log('Extracting dari path:', path);
+                
+                // Pattern untuk :id, {id}, :variable_name, {variable_name}
+                // Extract pattern :variable_name (compatible dengan semua browser)
+                let colonRegex = /:([a-zA-Z0-9_-]+)/g;
+                let colonMatch;
+                while ((colonMatch = colonRegex.exec(path)) !== null) {
+                    const varName = colonMatch[1];
+                    if (varName && !pathVarsToUse.includes(varName)) {
+                        pathVarsToUse.push(varName);
+                    }
+                }
+                
+                // Extract pattern {variable_name}
+                let braceRegex = /\{([a-zA-Z0-9_-]+)\}/g;
+                let braceMatch;
+                while ((braceMatch = braceRegex.exec(path)) !== null) {
+                    const varName = braceMatch[1];
+                    if (varName && !pathVarsToUse.includes(varName)) {
+                        pathVarsToUse.push(varName);
+                    }
+                }
+                
+                console.log('Path vars yang di-extract:', pathVarsToUse);
+            }
+            
+            let pathParamsHtml = '';
+            console.log('pathVarsToUse length:', pathVarsToUse.length, 'values:', pathVarsToUse);
+            if (pathVarsToUse.length > 0) {
+                pathParamsHtml = '<div class="info-label">Path Parameters</div>';
+                pathVarsToUse.forEach(param => {
+                    pathParamsHtml += `
+                        <div class="form-group">
+                            <label class="form-label">${param}</label>
+                            <input type="text" class="form-input" name="path_${param}" 
+                                   placeholder="Masukkan ${param}" required>
+                        </div>
+                    `;
+                });
+            } else {
+                pathParamsHtml = ''; // Kosongkan jika tidak ada path vars
+            }
+            document.getElementById('pathParamsSection').innerHTML = pathParamsHtml;
+            console.log('pathParamsHtml:', pathParamsHtml);
+            
+            // Update pathVars di currentEndpoint (pastikan selalu update)
+            if (currentEndpoint) {
+                currentEndpoint.pathVars = pathVarsToUse;
+                console.log('Updated currentEndpoint.pathVars:', currentEndpoint.pathVars);
+            }
+            
+            // Query parameters
+            let queryParamsHtml = '';
+            if (endpointData.queryParams && endpointData.queryParams.length > 0) {
+                queryParamsHtml = '<div class="info-label">Query Parameters</div>';
+                queryParamsHtml += '<div id="queryParamsList"></div>';
+                queryParamsHtml += '<button type="button" class="btn btn-add" onclick="addQueryParam()">+ Tambah Parameter</button>';
+            }
+            document.getElementById('queryParamsSection').innerHTML = queryParamsHtml;
+            
+            // Body (for POST/PUT)
+            let bodyHtml = '';
+            if (endpointData.method === 'POST' || endpointData.method === 'PUT') {
+                bodyHtml = '<div class="info-label">Request Body (JSON)</div>';
+                bodyHtml += `
+                    <div class="form-group">
+                        <textarea class="form-textarea" id="bodyInput" name="body" 
+                                  placeholder='{"key": "value"}'></textarea>
+                    </div>
+                `;
+                if (endpointData.body) {
+                    // Delay sedikit untuk memastikan textarea sudah di-render
+                    setTimeout(() => {
+                        const bodyInput = document.getElementById('bodyInput');
+                        if (bodyInput) {
+                            bodyInput.value = JSON.stringify(endpointData.body, null, 2);
+                        }
+                    }, 100);
+                }
+            }
+            document.getElementById('bodySection').innerHTML = bodyHtml;
+            
+            // Hide response area
+            document.getElementById('responseArea').style.display = 'none';
+            
+            // Reset response data
+            currentResponseData = null;
+        }
+
+        function addQueryParam() {
+            const list = document.getElementById('queryParamsList');
+            if (!list) return;
+            const div = document.createElement('div');
+            div.className = 'param-row';
+            div.innerHTML = `
+                <input type="text" class="form-input" placeholder="Parameter name" name="query_key">
+                <input type="text" class="form-input" placeholder="Parameter value" name="query_value">
+                <button type="button" class="btn-small" onclick="this.parentElement.remove()">Hapus</button>
+            `;
+            list.appendChild(div);
+        }
+    </script>
+</body>
+</html>
