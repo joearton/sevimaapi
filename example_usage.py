@@ -25,6 +25,20 @@ def main():
         print("3. Mengambil list program studi...")
         program_studi = client.get_program_studi()
         print(f"   Response keys: {list(program_studi.keys()) if isinstance(program_studi, dict) else 'N/A'}\n")
+
+        # Contoh tambahan: build query params dengan filtering & ordering
+        print("4. Contoh build params (filtering & ordering)")
+        filters = {
+            'nilai_angka': ('3', 'gt'),
+            'program_studi': 'Ilmu Hukum'
+        }
+        order = {'nim': 'asc'}
+        built = client._merge_query_params(params=None, page=1, per_page=20, filters=filters, order=order)
+        print(f"   Built query params: {built}\n")
+
+        # Contoh fetch all pages (hanya contoh; akan melakukan request jika API key disetel)
+        # all_pages_result = client.get_all_pages('siakadcloud/v1/mahasiswa', per_page=50)
+        # print(f"   All pages data count: {len(all_pages_result.get('data', []))}")
         
         # Contoh 4: Get detail dosen (jika ada ID)
         # dosen_id = "123"  # Ganti dengan ID yang valid

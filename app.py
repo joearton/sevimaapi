@@ -242,11 +242,28 @@ def test_endpoint():
         query_params = data.get('query_params', {})
         body_data = data.get('body', {})
         
-        # Replace path variables
+        # Replace path variables (hanya jika ada value)
         actual_path = endpoint_path
         for key, value in path_params.items():
-            actual_path = actual_path.replace(f':{key}', value)
-            actual_path = actual_path.replace(f'{{{key}}}', value)
+            if value and value.strip():  # Hanya replace jika ada value
+                actual_path = actual_path.replace(f':{key}', value.strip())
+                actual_path = actual_path.replace(f'{{{key}}}', value.strip())
+
+        # If there are still unreplaced path variables (like :id or {id}), return clear error
+        import re
+        missing_vars = set()
+        for match in re.findall(r':([a-zA-Z0-9_-]+)', actual_path):
+            missing_vars.add(match)
+        for match in re.findall(r'{([a-zA-Z0-9_-]+)}', actual_path):
+            missing_vars.add(match)
+
+        if missing_vars:
+            return jsonify({
+                'success': False,
+                'error': f'Missing path parameter(s): {", ".join(sorted(missing_vars))}. Please provide values for these path parameters before testing this endpoint.',
+                'endpoint': actual_path,
+                'method': method
+            }), 400
         
         # Initialize client
         client = get_client()
@@ -258,12 +275,26 @@ def test_endpoint():
         
         # Execute request based on method
         try:
+            # Support fetching all pages for GET by sending 'all_pages': true and optional 'per_page'
+            all_pages = data.get('all_pages', False)
+            per_page = data.get('per_page') or data.get('perPage')
+            page = data.get('page')
+
             if method == 'GET':
-                response = client.get(actual_path, params=query_params if query_params else None)
+                if all_pages:
+                    # Use client helper to aggregate pages
+                    response = client.get_all_pages(
+                        actual_path,
+                        params=query_params if query_params else None,
+                        per_page=int(per_page) if per_page else None,
+                        start_page=int(page) if page else 1
+                    )
+                else:
+                    response = client.get(actual_path, params=query_params if query_params else None)
             elif method == 'POST':
-                response = client.post(actual_path, json=body_data if body_data else None)
+                response = client.post(actual_path, params=query_params if query_params else None, json=body_data if body_data else None)
             elif method == 'PUT':
-                response = client.put(actual_path, json=body_data if body_data else None)
+                response = client.put(actual_path, params=query_params if query_params else None, json=body_data if body_data else None)
             elif method == 'DELETE':
                 response = client.delete(actual_path)
             else:
@@ -282,23 +313,32 @@ def test_endpoint():
                 'response': response,
                 'endpoint': actual_path,
                 'method': method
-            })
+            }), 200
         
         except Exception as e:
             import traceback
             error_detail = str(e)
+            status_code = 400
+            response_data = None
+            
             try:
-                # Try to get response body if it's an HTTP error
+                # Try to get response body and status code if it's an HTTP error
                 if hasattr(e, 'response') and e.response:
-                    error_detail = e.response.text
+                    status_code = e.response.status_code
+                    try:
+                        response_data = e.response.json()
+                    except:
+                        response_data = {'error': e.response.text}
+                    error_detail = f"HTTP {status_code}: {e.response.text[:200]}"
             except:
                 pass
             
             return jsonify({
                 'success': False,
                 'error': error_detail,
+                'response': response_data,
                 'traceback': traceback.format_exc()
-            }), 400
+            }), status_code
             
     except Exception as e:
         import traceback

@@ -1,0 +1,50 @@
+Pagination
+Full URL Example: https://api.sevimaplatform.com/siakadcloud/v1/mahasiswa?page=3 
+
+
+Response code
+    200 : Sukses mengambil data (Successful)
+    404 : Gagal Mengambil Data Karena Data tidak ditemukan (Not Found)
+    422 : Gagal Mengambil Data Karena ID Tidak Valid (Invalid ID)
+    401 : Gagal Mengambil Data Karena Akun Tidak Memiliki Akses (Access Restricted)
+    403 : Gagal Mengambil Data Karena Halaman Tidak Boleh Diakses (Forbidden)
+    429 : Gagal Mengambil Data Karena Terlalu Banyak Permintaan Akses (Too Many Request)
+
+
+
+Filtering
+Data filtering digunakan untuk membatasi output yang tampil berdasarkan kriteria yang ditentukan. Value yang akan difilter bersifat Case-Insensitive. Untuk kolom bertipe data string atau text hanya mendukung value regex dan jika ada value yang mengandung karakter simbol harus diawali dengan tanda backslash.
+Syntax:
+    f-{column}={value}
+    f-{column}-{operator}={value}
+
+
+Range Filtering
+Operator 	Example
+gt (Greater Than) 	“>” 	f-nilai_angka-gt=2
+gte (Greater Than Equal) 	“>=” 	f-nilai_angka-gte=2
+lt (Less Than) 	“<” 	f-nilai_angka-lt=3
+lte (Less Than Equal) 	“<=” 	f-nilai_angka-lte=3
+neq (Not Equal) 	“!=” 	f-nilai_angka-neq=2
+bw (Between) 	- 	f-nilai_angka-bw=2-to-4
+in (In) 	- 	f-nilai_angka-in=1,3,4
+nin (Not In) 	- 	f-nilai_angka-nin=1,3,4
+Full URL Example:
+    https://api.sevimaplatform.com/siakadcloud/v1/khs?f-nilai_angka=2
+    https://api.sevimaplatform.com/siakadcloud/v1/khs?f-nilai_angka-gt=2
+    https://api.sevimaplatform.com/siakadcloud/v1/khs?f-nilai_angka-bw=2_to_4
+    https://api.sevimaplatform.com/siakadcloud/v1/khs?f-nilai_angka-in=1,3,4
+    https://api.sevimaplatform.com/siakadcloud/v1/khs?f-nilai_angka-gt=3&f-nilai_angka-lte=4&f-program_studi=Ilmu Hukum 
+    https://api.sevimaplatform.com/siakadcloud/v1/khs?f-nilai_angka-gt=3&f-nilai_angka-lte=4&f-program_studi=Ilmu Hukum \(Pagi\)
+
+
+
+Ordering
+Data ordering digunakan untuk menampilkan data sesuai urutan dan kolom berdasarkan keinginan pengguna.
+Syntax: o-{column}={asc/desc}
+Full URL Example:
+
+    https://api.sevimaplatform.com/siakadcloud/v1/khs?o-nilai_angka=asc
+    https://api.sevimaplatform.com/siakadcloud/v1/khs?o-nim=asc&o-nilai_angka=desc
+    https://api.sevimaplatform.com/siakadcloud/v1/khs?f-nilai_angka-bw=2-to-4&o-nilai_angka=asc
+

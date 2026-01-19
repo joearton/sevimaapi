@@ -79,28 +79,177 @@ class SEVIMAClient:
         """
         url = f"{self.base_url}/{endpoint}"
         
-        response = self.session.request(
-            method=method,
-            url=url,
-            params=params,
-            data=data,
-            json=json
-        )
-        
-        response.raise_for_status()
-        return response.json()
+        try:
+            response = self.session.request(
+                method=method,
+                url=url,
+                params=params,
+                data=data,
+                json=json,
+                timeout=30
+            )
+        except requests.RequestException as e:
+            # Network-level error (DNS, connection, timeout, etc.)
+            raise
+
+        # Raise with more context when HTTP errors occur
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            # Attach response text/json for easier debugging
+            try:
+                content = response.json()
+            except Exception:
+                content = response.text
+            e.response_content = content  # type: ignore[attr-defined]
+            raise
+
+        # Try to return JSON; if not JSON, return raw text inside a dict
+        try:
+            return response.json()
+        except Exception:
+            return {"raw": response.text}
     
     def get(self, endpoint: str, params: Optional[Dict] = None) -> Dict[str, Any]:
         """GET request helper"""
         return self._request("GET", endpoint, params=params)
+
+    def get_with_options(
+        self,
+        endpoint: str,
+        params: Optional[Dict] = None,
+        page: Optional[int] = None,
+        per_page: Optional[int] = None,
+        filters: Optional[Dict[str, Any]] = None,
+        order: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        GET request helper with support for pagination, filtering and ordering as
+        described in project `info.txt`.
+
+        - Pagination: page (int) and per_page (int) are added as query params.
+        - Filtering: `filters` should be a dict where keys are column names and
+          values are either a primitive (interpreted as equality) or a tuple
+          (value, operator) to map to `f-{column}` or `f-{column}-{operator}`.
+        - Ordering: `order` should be a dict mapping column -> 'asc'|'desc',
+          converted to `o-{column}` params.
+        """
+        merged = self._merge_query_params(params, page, per_page, filters, order)
+        return self._request("GET", endpoint, params=merged)
+
+    def _merge_query_params(
+        self,
+        params: Optional[Dict[str, Any]] = None,
+        page: Optional[int] = None,
+        per_page: Optional[int] = None,
+        filters: Optional[Dict[str, Any]] = None,
+        order: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, Any]:
+        """Build query params following SEVIMA conventions from info.txt."""
+        merged: Dict[str, Any] = {}
+        if params:
+            merged.update(params)
+
+        if page is not None:
+            merged['page'] = page
+        if per_page is not None:
+            merged['per_page'] = per_page
+
+        # Filters: translate {col: value} or {col: (value, operator)} -> f-{col}[(-operator)]=value
+        if filters:
+            for col, val in filters.items():
+                if isinstance(val, tuple) and len(val) == 2:
+                    value, operator = val
+                    key = f"f-{col}-{operator}"
+                    merged[key] = value
+                else:
+                    key = f"f-{col}"
+                    merged[key] = val
+
+        # Ordering: {col: 'asc'|'desc'} -> o-{col}=asc
+        if order:
+            for col, direction in order.items():
+                merged[f"o-{col}"] = direction
+
+        return merged
+
+    def get_all_pages(
+        self,
+        endpoint: str,
+        params: Optional[Dict[str, Any]] = None,
+        per_page: Optional[int] = None,
+        filters: Optional[Dict[str, Any]] = None,
+        order: Optional[Dict[str, str]] = None,
+        start_page: int = 1,
+        page_param: str = 'page'
+    ) -> Dict[str, Any]:
+        """
+        Helper to fetch all pages from a paginated endpoint.
+
+        Returns a dict with keys: data (list) and meta (last received meta if available).
+        The function attempts to detect pagination using `meta` or `urls` fields in responses.
+        """
+        aggregated: List[Any] = []
+        page = start_page
+        last_meta = None
+
+        while True:
+            resp = self.get_with_options(
+                endpoint,
+                params=params,
+                page=page,
+                per_page=per_page,
+                filters=filters,
+                order=order,
+            )
+
+            # If response has 'data' as list, aggregate
+            if isinstance(resp, dict) and 'data' in resp and isinstance(resp['data'], list):
+                aggregated.extend(resp['data'])
+            else:
+                # Not a list-style paginated response; return the single response
+                return {'data': resp, 'meta': None}
+
+            # store last meta if exists
+            last_meta = resp.get('meta') if isinstance(resp, dict) else None
+
+            # Determine whether to continue
+            if last_meta:
+                current = last_meta.get('current_page')
+                last_page = last_meta.get('last_page')
+                if current is not None and last_page is not None:
+                    if current >= last_page:
+                        break
+                    else:
+                        page = (current or page) + 1
+                        continue
+
+            # Fallback: if urls.next exists and is truthy, continue; else stop
+            urls = resp.get('urls') if isinstance(resp, dict) else None
+            if urls and urls.get('next'):
+                page += 1
+                continue
+
+            # If data length is less than per_page, likely last page
+            if per_page and len(resp.get('data', [])) < per_page:
+                break
+
+            # Safety: if we received empty data, stop
+            if not resp.get('data'):
+                break
+
+            # Otherwise, increment page and retry
+            page += 1
+
+        return {'data': aggregated, 'meta': last_meta}
     
-    def post(self, endpoint: str, json: Optional[Dict] = None, data: Optional[Dict] = None) -> Dict[str, Any]:
-        """POST request helper"""
-        return self._request("POST", endpoint, json=json, data=data)
+    def post(self, endpoint: str, params: Optional[Dict] = None, json: Optional[Dict] = None, data: Optional[Dict] = None) -> Dict[str, Any]:
+        """POST request helper (supports query params)"""
+        return self._request("POST", endpoint, params=params, json=json, data=data)
     
-    def put(self, endpoint: str, json: Optional[Dict] = None) -> Dict[str, Any]:
-        """PUT request helper"""
-        return self._request("PUT", endpoint, json=json)
+    def put(self, endpoint: str, params: Optional[Dict] = None, json: Optional[Dict] = None) -> Dict[str, Any]:
+        """PUT request helper (supports query params)"""
+        return self._request("PUT", endpoint, params=params, json=json)
     
     def delete(self, endpoint: str) -> Dict[str, Any]:
         """DELETE request helper"""
